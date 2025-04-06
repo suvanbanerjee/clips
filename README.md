@@ -101,7 +101,7 @@ CLIPS_ENVIRONMENT="dev"
 You can read more about BaseSettings class here: https://pydantic-docs.helpmanual.io/usage/settings/
 
 ## Database
-It was only mentioned to use PostgreSQL but as per the doc we are suposed to use it like a production application hence i have used Pinacco as ORM to make it more easy to deal with database opperations
+It was only mentioned to use PostgreSQL but as per the doc we are suposed to use it like a production application hence i have used Piccolo as ORM to make it more easy to deal with database opperations
 
 ## Pre-commit
 
