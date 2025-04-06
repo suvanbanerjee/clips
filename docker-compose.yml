@@ -1,0 +1,74 @@
+services:
+  api: &main_app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: clips:${CLIPS_VERSION:-latest}
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      CLIPS_HOST: 0.0.0.0
+      CLIPS_DB_HOST: clips-db
+      CLIPS_DB_PORT: 5432
+      CLIPS_DB_USER: clips
+      CLIPS_DB_PASS: clips
+      CLIPS_DB_BASE: clips
+    ports:
+      - "8000:8000"
+
+  db:
+    image: postgres:16.3-bullseye
+    hostname: clips-db
+    environment:
+      POSTGRES_PASSWORD: "clips"
+      POSTGRES_USER: "clips"
+      POSTGRES_DB: "clips"
+    volumes:
+      - clips-db-data:/var/lib/postgresql/data
+    restart: always
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: pg_isready -U clips
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    restart: always
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    restart: always
+    depends_on:
+      - prometheus
+
+volumes:
+  clips-db-data:
+    name: clips-db-data
+  prometheus-data:
+    name: prometheus-data
+  grafana-data:
+    name: grafana-data
